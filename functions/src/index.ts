@@ -1183,3 +1183,58 @@ export const getUpcomingBirthdays = onRequest(async (request, response) => {
     }
 });
 
+// Query customers with advanced filtering, sorting, and pagination
+export const queryCustomers = onRequest(async (request, response) => {
+    // Handle CORS
+    try {
+        await applyCors(request, response);
+
+        // Accept both GET and POST for flexibility
+        if (request.method !== 'GET' && request.method !== 'POST') {
+            response.status(405).json({
+                success: false,
+                message: 'Method Not Allowed'
+            });
+            return;
+        }
+
+        // Extract query parameters 
+        // For GET requests, use query parameters
+        // For POST requests, use body
+        const queryParams = request.method === 'GET'
+            ? request.query
+            : request.body;
+
+        const searchQuery = queryParams.query as string || '';
+        const pageSize = Number(queryParams.pageSize || 50);
+        const pageNumber = Number(queryParams.pageNumber || 1);
+        const sortBy = queryParams.sortBy as string || 'accountname';
+        const sortDirection = (queryParams.sortDirection as 'asc' | 'desc') || 'asc';
+
+        const result = await customerService.queryCustomers({
+            query: searchQuery,
+            pageSize,
+            pageNumber,
+            sortBy,
+            sortDirection
+        });
+
+        if (!result.success) {
+            response.status(500).json({
+                success: false,
+                message: result.error?.message || 'Failed to query customers'
+            });
+            return;
+        }
+
+        // Return response in standardized format, preserving the Fireberry API response structure
+        response.json({
+            success: true,
+            data: result.data,
+            message: ''
+        });
+    } catch (error) {
+        handleError(error, response);
+    }
+});
+

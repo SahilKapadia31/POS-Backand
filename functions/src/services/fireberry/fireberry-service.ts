@@ -56,11 +56,17 @@ export class FireberryService {
         } catch (error: any) {
             console.error(`Error calling Fireberry API (${endpoint}):`, error);
 
+            // Log more details about the error
+            if (error.response) {
+                console.error('Response status:', error.response.status);
+                console.error('Response data:', error.response.data);
+            }
+
             return {
                 success: false,
                 error: {
                     code: error.response?.status?.toString() || 'unknown',
-                    message: error.message || 'Unknown error occurred'
+                    message: error.response?.data?.Message || error.message || 'Unknown error occurred'
                 }
             };
         }
